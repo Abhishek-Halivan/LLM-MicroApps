@@ -1,5 +1,5 @@
 #PUBLISHED = True
-#APP_URL = "https://mcq-generator-bot.streamlit.app"
+#APP_URL = "https://.streamlit.app"
 
 APP_TITLE = "MCQ Generator"
 APP_INTRO = """This micro-app allows you to generate multiple-choice questions quickly and consistently. 
@@ -49,11 +49,22 @@ PHASES = {
                 "index": 0,
                 "options": [1, 2, 3, 4],
             },
-            "question_level": {
-                "label": "Question difficulty level:",
+            "eqf_level": {
+                "label": "Target EQF difficulty level:",
                 "type": "selectbox",
-                "options": ['Grade School', 'High School', 'University'],
-                "index": 2,
+                "options": [
+                    "EQF 1 – Basic general knowledge",
+                    "EQF 2 – Basic factual knowledge in a field",
+                    "EQF 3 – Facts, principles, processes and general concepts in a field",
+                    "EQF 4 – Broad factual and theoretical knowledge in a field",
+                    "EQF 5 – Specialised, comprehensive knowledge with awareness of limits",
+                    "EQF 6 – Advanced knowledge with critical understanding of theories and principles",
+                    "EQF 7 – Highly specialised knowledge, some at the forefront of the field",
+                    "EQF 8 – Knowledge at the most advanced frontier of a field"
+                ],
+                # Default to EQF 6 (typical Bachelor/University level)
+                "index": 5,
+                "help": "EQF levels 1–8: 1 = basic, 8 = doctoral-level complexity."
             },
             "distractors_num": {
                 "label": "Number of distractors:",
@@ -86,7 +97,10 @@ PHASES = {
         "user_prompt": [
             {
                 "condition": {},
-                "prompt": "Please write {questions_num} {question_level} level multiple-choice question(s), each with {correct_ans_num} correct answer(s) and {distractors_num} distractors, based on text that I will provide.\n",
+                "prompt": "Please write {questions_num} multiple-choice question(s) suitable for learners at the "
+                          "European Qualifications Framework (EQF) difficulty level: {eqf_level}. "
+                          "Each question should have {correct_ans_num} correct answer(s) and {distractors_num} "
+                          "distractors, based on text that I will provide.\n",
             },
             {
                 "condition": {"original_content_only": True},
@@ -105,7 +119,7 @@ PHASES = {
                 "prompt": "Distractors should sound like they could be plausible, but are ultimately incorrect. \n\n"
             },
             {
-                "condition": {"learning_objective": ""},
+                "condition": {"learning_objective": {"$ne": ""}},
                 "prompt": "Focus on meeting the following learning objective(s): {learning_objective}\n"
             },
             {
