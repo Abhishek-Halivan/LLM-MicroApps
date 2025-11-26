@@ -216,12 +216,16 @@ def execute_llm_completions(SYSTEM_PROMPT, selected_llm, phase_instructions, use
     if selected_llm not in LLM_CONFIG:
         raise ValueError(f"Selected model '{selected_llm}' not found in configuration.")
 
-    model_config = LLM_CONFIG[selected_llm]
-    family = model_config["family"]
+    base_model_config = LLM_CONFIG[selected_llm]
     chat_history = st.session_state["chat_history"]
 
+    # Merge base config with any user overrides from the sidebar
+    user_llm_config = st.session_state.get("llm_config", {})
+    model_config = {**base_model_config, **user_llm_config}
+    family = model_config["family"]
+
     api_keys = {
-        "openai": st.session_state.get("openai_api_key"),
+        "openai": st.session_state.get("openai_api_key")
     }
 
     context = {
@@ -240,7 +244,7 @@ def execute_llm_completions(SYSTEM_PROMPT, selected_llm, phase_instructions, use
         "price_output_token_1M": model_config["price_output_token_1M"],
         "TOTAL_PRICE": 0,
         "chat_history": chat_history,
-        "api_keys": {k: v for k, v in api_keys.items() if v},  # only non-empty keys
+        "api_keys": {k: v for k, v in api_keys.items() if v},
     }
 
     handler = HANDLERS.get(family)
@@ -454,47 +458,74 @@ def main(config):
     if 'TOTAL_PRICE' not in st.session_state:
         st.session_state['TOTAL_PRICE'] = 0
 
-    # Handle sidebar and model selection
+    # Handle sidebar: API keys, model selection, and basic generation settings
     with st.sidebar:
         st.subheader("API keys")
 
         openai_key = st.text_input("OpenAI API key", type="password", key="openai_api_key")
-        st.caption("Keys are stored only in this browser session and not persisted on the server.")
+
+        st.caption("Keys are stored only in this session and not persisted on the server.")
+
+        st.markdown("---")
 
         llm_options = list(LLM_CONFIGURATIONS.keys())
         llm_index = llm_options.index(PREFERRED_LLM) if PREFERRED_LLM in llm_options else 0
 
-        selected_llm = st.selectbox("Select Language Model", options=LLM_CONFIGURATIONS.keys(), index=llm_index,
-                                    key="selected_llm")
+        selected_llm = st.selectbox(
+            "Language model",
+            options=LLM_CONFIGURATIONS.keys(),
+            index=llm_index,
+            key="selected_llm",
+        )
 
         initial_config = LLM_CONFIGURATIONS[selected_llm]
-        st.session_state['llm_config'] = {
+
+        # Basic controls that are actually useful to tweak
+        with st.expander("Generation settings", expanded=False):
+            temperature = st.slider(
+                "Temperature",
+                min_value=0.0,
+                max_value=1.0,
+                value=float(initial_config.get("temperature", 1.0)),
+                step=0.01,
+            )
+            max_tokens = st.slider(
+                "Max output tokens",
+                min_value=50,
+                max_value=4000,
+                value=int(initial_config.get("max_tokens", 1000)),
+                step=50,
+            )
+            top_p = st.slider(
+                "Top P",
+                min_value=0.0,
+                max_value=1.0,
+                value=float(initial_config.get("top_p", 1.0)),
+                step=0.1,
+            )
+
+        # Store the overrides in session state so the LLM call can use them
+        st.session_state["llm_config"] = {
             "model": initial_config["model"],
-            "temperature": st.slider("Temperature", min_value=0.0, max_value=1.0,
-                                     value=float(initial_config.get("temperature", 1.0)), step=0.01),
-            "max_tokens": st.slider("Max Tokens", min_value=50, max_value=4000,
-                                    value=int(initial_config.get("max_tokens", 1000)), step=50),
-            "top_p": st.slider("Top P", min_value=0.0, max_value=1.0, value=float(initial_config.get("top_p", 1.0)),
-                               step=0.1),
-            "frequency_penalty": st.slider("Frequency Penalty", min_value=0.0, max_value=1.0,
-                                           value=float(initial_config.get("frequency_penalty", 0.0)), step=0.01),
-            "presence_penalty": st.slider("Presence Penalty", min_value=0.0, max_value=1.0,
-                                          value=float(initial_config.get("presence_penalty", 0.0)), step=0.01),
-            "price_input_token_1M": st.number_input("Input Token Price 1M",
-                                                    value=initial_config.get("price_input_token_1M", 0)),
-            "price_output_token_1M": st.number_input("Output Token Price 1M",
-                                                     value=initial_config.get("price_output_token_1M", 0))
+            "temperature": temperature,
+            "max_tokens": max_tokens,
+            "top_p": top_p,
+            # keep penalties from default config (no need to expose sliders)
+            "frequency_penalty": initial_config.get("frequency_penalty", 0.0),
+            "presence_penalty": initial_config.get("presence_penalty", 0.0),
+            # prices stay internal; no UI
+            "price_input_token_1M": initial_config.get("price_input_token_1M", 0.0),
+            "price_output_token_1M": initial_config.get("price_output_token_1M", 0.0),
         }
 
-        if DISPLAY_COST:
-            st.write("Price: ${:.6f}".format(st.session_state['TOTAL_PRICE']))
+        st.markdown("---")
 
         # Display chat history in the sidebar
         st.subheader("Chat History")
-        for history in st.session_state['chat_history']:
+        for history in st.session_state["chat_history"]:
             st.markdown(f"**User:** {history['user']}")
-            if 'app_images' in history:
-                for image in history['app_images']:
+            if "app_images" in history:
+                for image in history["app_images"]:
                     st.image(image)
             st.markdown(f"**AI:** {history['assistant']}")
             st.markdown("---")

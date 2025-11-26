@@ -172,7 +172,7 @@ PREFERRED_LLM = "gpt-4o"
 
 
 #SCORING_DEBUG_MODE = True
-DISPLAY_COST = True
+DISPLAY_COST = False
 
 COMPLETION_MESSAGE = "Hope you enjoyed using the tool"
 COMPLETION_CELEBRATION = False
