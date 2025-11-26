@@ -10,13 +10,20 @@ import re
 load_dotenv()
 
 # fetching api key for LLM interactions
-def get_api_key(service_name):
-    """Retrieve API key from environment variables based on service name."""
+def get_api_key(service_name, context=None):
+    """Retrieve API key from context (preferred) or environment variables."""
+    # 1) Prefer keys passed from the Streamlit app
+    if context and "api_keys" in context:
+        key_from_context = context["api_keys"].get(service_name)
+        if key_from_context:
+            return key_from_context
+
+    # 2) Fallback to environment variables (.env or deployment secrets)
     env_var_name = f"{service_name.upper()}_API_KEY"
     api_key = os.getenv(env_var_name)
 
     if not api_key:
-        raise ValueError(f"API key for {service_name} not found in environment variables.")
+        raise ValueError(f"API key for {service_name} not found in context or environment variables.")
 
     return api_key
 
@@ -47,7 +54,7 @@ def handle_openai(context):
     if not context["supports_image"] and context.get("image_urls"):
         return "Images are not supported by selected model."
     try:
-        openai.api_key = get_api_key("openai")
+        openai.api_key = get_api_key("openai", context)
 
         messages = format_chat_history(context["chat_history"], "openai") + [
             {"role": "system", "content": context["SYSTEM_PROMPT"]},
@@ -82,7 +89,7 @@ def handle_claude(context):
     if not context["supports_image"] and context.get("image_urls"):
         return "Images are not supported by selected model."
     try:
-        client = anthropic.Anthropic(api_key=get_api_key("claude"))
+        client = anthropic.Anthropic(api_key=get_api_key("claude", context))
 
         messages = format_chat_history(context["chat_history"], "claude") + [
             {"role": "user", "content": [{"type": "text", "text": context["user_prompt"]}]},
@@ -128,7 +135,7 @@ def handle_gemini(context):
     if not context["supports_image"] and context.get("image_urls"):
         return "Images are not supported by selected model."
     try:
-        genai.configure(api_key=get_api_key("google"))
+        genai.configure(api_key=get_api_key("google", context))
 
         messages = format_chat_history(context["chat_history"], "gemini") + [
             {"role": "user", "parts": [context["user_prompt"]]},
@@ -158,7 +165,7 @@ def handle_perplexity(context):
     """Handle requests for Perplexity models."""
     if not context["supports_image"] and context.get("image_urls"):
         return "Images are not supported by selected model."
-    api_key = get_api_key("perplexity")
+    api_key = get_api_key("perplexity", context)
     url = "https://api.perplexity.ai/chat/completions"
 
     # Prepare messages

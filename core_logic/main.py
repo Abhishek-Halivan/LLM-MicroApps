@@ -209,7 +209,7 @@ def build_field(phase_name, fields,user_input):
             user_input[field_key] = my_input_function(**kwargs)
 
 # Function to execute LLM completions
-def execute_llm_completions(SYSTEM_PROMPT,selected_llm, phase_instructions, user_prompt, image_urls=None):
+def execute_llm_completions(SYSTEM_PROMPT, selected_llm, phase_instructions, user_prompt, image_urls=None):
     """
     Executes LLM completions using the selected model.
     """
@@ -219,6 +219,10 @@ def execute_llm_completions(SYSTEM_PROMPT,selected_llm, phase_instructions, user
     model_config = LLM_CONFIG[selected_llm]
     family = model_config["family"]
     chat_history = st.session_state["chat_history"]
+
+    api_keys = {
+        "openai": st.session_state.get("openai_api_key"),
+    }
 
     context = {
         "SYSTEM_PROMPT": SYSTEM_PROMPT,
@@ -236,8 +240,7 @@ def execute_llm_completions(SYSTEM_PROMPT,selected_llm, phase_instructions, user
         "price_output_token_1M": model_config["price_output_token_1M"],
         "TOTAL_PRICE": 0,
         "chat_history": chat_history,
-        #"RAG_IMPLEMENTATION": RAG_IMPLEMENTATION if 'RAG_IMPLEMENTATION' in locals() else False,
-        #"file_path": "rag_docs/" + SOURCE_DOCUMENT if 'SOURCE_DOCUMENT' in locals() else None,
+        "api_keys": {k: v for k, v in api_keys.items() if v},  # only non-empty keys
     }
 
     handler = HANDLERS.get(family)
@@ -453,6 +456,11 @@ def main(config):
 
     # Handle sidebar and model selection
     with st.sidebar:
+        st.subheader("API keys")
+
+        openai_key = st.text_input("OpenAI API key", type="password", key="openai_api_key")
+        st.caption("Keys are stored only in this browser session and not persisted on the server.")
+
         llm_options = list(LLM_CONFIGURATIONS.keys())
         llm_index = llm_options.index(PREFERRED_LLM) if PREFERRED_LLM in llm_options else 0
 
@@ -490,6 +498,27 @@ def main(config):
                     st.image(image)
             st.markdown(f"**AI:** {history['assistant']}")
             st.markdown("---")
+
+    # Require an API key for the selected provider
+    family_to_service = {
+        "openai": "openai",
+        "claude": "claude",
+        "gemini": "google",       # using GOOGLE_API_KEY for Gemini
+        "perplexity": "perplexity",
+        "rag": "openai",          # RAG pipeline uses OpenAI under the hood
+    }
+
+    selected_family = LLM_CONFIGURATIONS[selected_llm]["family"]
+    service_name = family_to_service.get(selected_family)
+
+    if service_name:
+        required_key = st.session_state.get(f"{service_name}_api_key")
+        if not required_key:
+            st.warning(
+                f"Please enter a valid {service_name.capitalize()} API key in the sidebar "
+                f"to use this app with **{selected_llm}**."
+            )
+            st.stop()
 
     # Main content rendering
     if 'CURRENT_PHASE' not in st.session_state:
