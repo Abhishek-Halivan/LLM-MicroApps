@@ -9,6 +9,171 @@ import re
 
 load_dotenv()
 
+
+# --- Vimeo transcript helpers ---
+def clean_vtt_or_srt(text: str) -> str:
+    """Clean VTT/SRT style transcript text by removing timestamps, cue numbers and headers.
+
+    Returns a cleaned single string containing transcript sentences.
+    """
+    lines = text.splitlines()
+    cleaned_lines = []
+
+    for line in lines:
+        line_strip = line.strip()
+        if not line_strip:
+            continue
+        # skip WEBVTT header
+        if line_strip.upper().startswith("WEBVTT"):
+            continue
+        # skip sequence numbers in SRT
+        if line_strip.isdigit():
+            continue
+        # skip lines that are timestamps or contain the arrow separator
+        if "-->" in line_strip:
+            continue
+        # remove bracketed timestamps like [00:01:23]
+        line_strip = re.sub(r"\[\d{1,2}:\d{2}(?::\d{2})?\]", "", line_strip)
+        # remove inline timestamps mm:ss or hh:mm:ss patterns
+        line_strip = re.sub(r"\b\d{1,2}:\d{2}(?::\d{2})?\b", "", line_strip)
+        # collapse whitespace
+        line_strip = re.sub(r"\s+", " ", line_strip).strip()
+        if line_strip:
+            cleaned_lines.append(line_strip)
+
+    cleaned = " ".join(cleaned_lines)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    return cleaned
+
+
+def fetch_vimeo_transcript(vimeo_url: str, vimeo_token: str = None, timeout: int = 10) -> str:
+    """Fetch the transcript for a Vimeo video URL.
+
+    Strategy:
+    - If vimeo_token is provided, use the Vimeo API v3 to get transcripts with auth
+    - Otherwise, extract Vimeo numeric id from the URL and query the player config
+    - Download the first suitable text track (prefer English)
+    - Clean timestamps and return plain text
+
+    Args:
+        vimeo_url: URL of the Vimeo video
+        vimeo_token: Optional Vimeo API token for authenticated requests
+        timeout: Request timeout in seconds
+
+    Returns cleaned transcript string or empty string if not found.
+    """
+    if not vimeo_url:
+        return ""
+    
+    vimeo_url = vimeo_url.strip()
+    if not vimeo_url:
+        return ""
+    
+    # Extract numeric id from URL
+    m = re.search(r"vimeo\.com/(?:.*?/)?(\d+)", vimeo_url)
+    if not m:
+        raise ValueError(f"Could not extract Vimeo video id from URL: {vimeo_url}")
+    vid = m.group(1)
+    print(f"[DEBUG] Extracted Vimeo video ID: {vid}")
+
+    # If token is provided, try the authenticated API endpoint
+    if vimeo_token:
+        try:
+            print(f"[DEBUG] Attempting to fetch transcript with API token for video {vid}")
+            api_url = f"https://api.vimeo.com/videos/{vid}/texttracks"
+            headers = {
+                "Authorization": f"Bearer {vimeo_token}",
+                "Accept": "application/vnd.vimeo.*+json;version=3.4"
+            }
+            resp = requests.get(api_url, headers=headers, timeout=timeout)
+            resp.raise_for_status()
+            data = resp.json()
+            
+            print(f"[DEBUG] API response: {data}")
+            
+            if "data" in data and data["data"]:
+                # Find English track or use first available
+                track = None
+                for t in data["data"]:
+                    lang = t.get("language", "").lower()
+                    if lang and lang.startswith("en"):
+                        track = t
+                        break
+                if not track:
+                    track = data["data"][0]
+                
+                print(f"[DEBUG] Selected track: {track}")
+                
+                # Download the transcript file
+                track_url = track.get("link")
+                if track_url:
+                    print(f"[DEBUG] Downloading transcript from: {track_url}")
+                    tt_resp = requests.get(track_url, timeout=timeout)
+                    tt_resp.raise_for_status()
+                    raw_text = tt_resp.text
+                    print(f"[DEBUG] Downloaded transcript, size: {len(raw_text)} bytes")
+                    cleaned = clean_vtt_or_srt(raw_text)
+                    print(f"[DEBUG] Cleaned transcript, size: {len(cleaned)} characters")
+                    return cleaned
+        except Exception as e:
+            print(f"[DEBUG] API method failed: {type(e).__name__}: {e}")
+            # Fall back to player config method if API fails
+
+    # Fallback: use player config (works for public videos)
+    try:
+        print(f"[DEBUG] Attempting to fetch transcript from player config for video {vid}")
+        config_url = f"https://player.vimeo.com/video/{vid}/config"
+        resp = requests.get(config_url, timeout=timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        
+        print(f"[DEBUG] Player config response keys: {data.keys()}")
+
+        # locate text tracks
+        text_tracks = []
+        # common places where text tracks appear in the config
+        if isinstance(data.get("request"), dict):
+            files = data["request"].get("files", {})
+            text_tracks = files.get("text_tracks") or data["request"].get("text_tracks") or []
+        text_tracks = text_tracks or data.get("text_tracks") or []
+
+        print(f"[DEBUG] Found {len(text_tracks)} text tracks")
+        
+        if not text_tracks:
+            print(f"[DEBUG] No text tracks found in player config")
+            return ""
+
+        # prefer english track
+        track = None
+        for t in text_tracks:
+            lang = t.get("lang", "").lower()
+            if lang and lang.startswith("en"):
+                track = t
+                break
+        if not track:
+            track = text_tracks[0]
+
+        print(f"[DEBUG] Selected track: {track}")
+        
+        track_url = track.get("url")
+        if not track_url:
+            print(f"[DEBUG] No URL in track")
+            return ""
+
+        print(f"[DEBUG] Downloading transcript from: {track_url}")
+        tt_resp = requests.get(track_url, timeout=timeout)
+        tt_resp.raise_for_status()
+        raw_text = tt_resp.text
+        print(f"[DEBUG] Downloaded transcript, size: {len(raw_text)} bytes")
+        cleaned = clean_vtt_or_srt(raw_text)
+        print(f"[DEBUG] Cleaned transcript, size: {len(cleaned)} characters")
+        return cleaned
+    except Exception as e:
+        print(f"[DEBUG] Player config method failed: {type(e).__name__}: {e}")
+        import traceback
+        traceback.print_exc()
+        return ""
+
 # fetching api key for LLM interactions
 def get_api_key(service_name, context=None):
     """Retrieve API key from context (preferred) or environment variables."""

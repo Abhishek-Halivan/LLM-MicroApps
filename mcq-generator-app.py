@@ -23,6 +23,11 @@ PHASES = {
     "phase1": {
         "name": "Configure Questions",
         "fields": {
+            "vimeo_url": {
+                "type": "text_input",
+                "label": "Vimeo URL (optional):",
+                "placeholder": "https://vimeo.com/123456789",
+            },
             "topic_content": {
                 "type": "text_area",
                 "label": "Enter the content for question generation:",

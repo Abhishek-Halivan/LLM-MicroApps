@@ -5,7 +5,7 @@ import mimetypes
 import streamlit as st
 from streamlit_extras.stylable_container import stylable_container
 from streamlit_extras.let_it_rain import rain
-from core_logic.handlers import HANDLERS
+from core_logic.handlers import HANDLERS, fetch_vimeo_transcript
 from core_logic.llm_config import LLM_CONFIG
 
 # Folder where config files are stored
@@ -464,6 +464,9 @@ def main(config):
 
         openai_key = st.text_input("OpenAI API key", type="password", key="openai_api_key")
 
+        vimeo_token = st.text_input("Vimeo API Token (optional)", type="password", key="vimeo_api_token", 
+                                     help="Used to download Vimeo transcripts for videos. Get one from https://developer.vimeo.com/apps")
+
         st.caption("Keys are stored only in this session and not persisted on the server.")
 
         st.markdown("---")
@@ -644,6 +647,24 @@ def main(config):
                 z += 1
 
         if submit_button:
+            # If the user provided a Vimeo URL, attempt to fetch and clean the transcript
+            vimeo_url = (user_input.get("vimeo_url") or "").strip()
+            if vimeo_url:
+                try:
+                    vimeo_token = st.session_state.get("vimeo_api_token", "").strip() or None
+                    with st.spinner("Fetching Vimeo transcript..."):
+                        transcript = fetch_vimeo_transcript(vimeo_url, vimeo_token=vimeo_token)
+                    if transcript:
+                        # populate the topic_content with the cleaned transcript
+                        user_input["topic_content"] = transcript
+                        st.success(f"✅ Successfully fetched transcript ({len(transcript)} characters)")
+                        # Re-format the user prompt now that we have the transcript
+                        formatted_user_prompt = format_user_prompt(user_prompt_template, user_input, PHASE_NAME, PHASES)
+                    else:
+                        st.warning("⚠️ Could not find captions/transcript for the provided Vimeo URL. Check if the video has captions enabled.")
+                except Exception as e:
+                    st.error(f"❌ Error fetching Vimeo transcript: {e}")
+
             for field_key, field in fields.items():
                 st_store(user_input.get(field_key, ""), PHASE_NAME, "user_input", field_key)
 
