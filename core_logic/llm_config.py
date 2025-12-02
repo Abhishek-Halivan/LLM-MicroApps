@@ -1,5 +1,17 @@
 # llm_config.py
 LLM_CONFIG = {
+    "gpt-5.1": {
+        "family": "openai",
+        "model": "gpt-5.1",
+        "max_tokens": 8192,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": True,
+        "price_input_token_1M": 20,
+        "price_output_token_1M": 80
+    },
     "gpt-4o-mini": {
         "family": "openai",
         "model": "gpt-4o-mini",
@@ -47,6 +59,90 @@ LLM_CONFIG = {
         "supports_image": True,
         "price_input_token_1M": 5,
         "price_output_token_1M": 15
+    },
+    "gpt-4o-2025-05-13": {
+        "family": "openai",
+        "model": "gpt-4o-2025-05-13",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": True,
+        "price_input_token_1M": 5,
+        "price_output_token_1M": 15
+    },
+    "gpt-4-turbo-with-vision": {
+        "family": "openai",
+        "model": "gpt-4-turbo-2024-04-09",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": True,
+        "price_input_token_1M": 10,
+        "price_output_token_1M": 30
+    },
+    "gpt-4-turbo-preview": {
+        "family": "openai",
+        "model": "gpt-4-turbo-preview",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": True,
+        "price_input_token_1M": 10,
+        "price_output_token_1M": 30
+    },
+    "o1": {
+        "family": "openai",
+        "model": "o1",
+        "max_tokens": 128000,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 15,
+        "price_output_token_1M": 60
+    },
+    "o1-preview": {
+        "family": "openai",
+        "model": "o1-preview",
+        "max_tokens": 128000,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 15,
+        "price_output_token_1M": 60
+    },
+    "o1-mini": {
+        "family": "openai",
+        "model": "o1-mini",
+        "max_tokens": 65536,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 3,
+        "price_output_token_1M": 12
+    },
+    "gpt-4-vision": {
+        "family": "openai",
+        "model": "gpt-4-vision-preview",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": True,
+        "price_input_token_1M": 10,
+        "price_output_token_1M": 30
     },
     "gemini-1.5-flash": {
         "family": "gemini",
@@ -191,5 +287,41 @@ LLM_CONFIG = {
         "supports_image": False,
         "price_input_token_1M": 1.0,
         "price_output_token_1M": 1.0
+    },
+    "sonar-pro": {
+        "family": "perplexity",
+        "model": "sonar-pro",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 3.0,
+        "price_output_token_1M": 3.0
+    },
+    "sonar": {
+        "family": "perplexity",
+        "model": "sonar",
+        "max_tokens": 4096,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 1.0,
+        "price_output_token_1M": 1.0
+    },
+    "sonar-reasoning-pro": {
+        "family": "perplexity",
+        "model": "sonar-reasoning-pro",
+        "max_tokens": 8192,
+        "temperature": 1.0,
+        "top_p": 1.0,
+        "frequency_penalty": 0,
+        "presence_penalty": 0,
+        "supports_image": False,
+        "price_input_token_1M": 5.0,
+        "price_output_token_1M": 15.0
     }
 }
