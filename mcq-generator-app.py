@@ -1,14 +1,14 @@
 #PUBLISHED = True
 #APP_URL = "https://.streamlit.app"
 
-APP_TITLE = "MCQ Generator"
+APP_TITLE = "Vimeo Transcript to MCQ Quiz Generator"
 APP_INTRO = """This micro-app allows you to generate multiple-choice questions quickly and consistently. 
 It can work with any LLM model.
 Optionally, users can modify the AI configuration by opening the left sidebar.
 """
 
 APP_HOW_IT_WORKS = """
- This is an **MCQ Generator** that can create multiple choice questions in different formats and for different subject domains depending on the user's input.
+ This is an **Vimeo Transcript to MCQ Quiz Generator** that can create multiple choice questions in different OLX and for different subject domains depending on the user's input.
 """
 
 SHARED_ASSET = {
@@ -186,7 +186,7 @@ COMPLETION_CELEBRATION = False
 #SOURCE_DOCUMENT = "sample.pdf" # file uploaded in source_docs if only
 
 PAGE_CONFIG = {
-    "page_title": "MCQ Generator",
+    "page_title": "Vimeo Transcript to MCQ Quiz Generator",
     "page_icon": "️🔤",
     "layout": "centered",
     "initial_sidebar_state": "expanded"
