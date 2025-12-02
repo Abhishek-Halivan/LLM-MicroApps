@@ -63,7 +63,7 @@ PHASES = {
                     #"EQF 3 – Facts, principles, processes and general concepts in a field",
                     #"EQF 4 – Broad factual and theoretical knowledge in a field",
                     #"EQF 5 – Specialised, comprehensive knowledge with awareness of limits",
-                    "EQF 6 –  (Bachelor Level) Advanced knowledge with critical understanding of theories and principles",
+                    "EQF 6 – (Bachelor Level) Advanced knowledge with critical understanding of theories and principles",
                     "EQF 7 – (Master Level) Highly specialised knowledge, some at the forefront of the field",
                     "EQF 8 – (Doctoral Level) Knowledge at the most advanced frontier of a field"
                 ],

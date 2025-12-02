@@ -7,6 +7,7 @@ from streamlit_extras.stylable_container import stylable_container
 from streamlit_extras.let_it_rain import rain
 from core_logic.handlers import HANDLERS, fetch_vimeo_transcript
 from core_logic.llm_config import LLM_CONFIG
+from core_logic.handlers import format_quiz_for_download, generate_download_filename
 
 # Folder where config files are stored
 CONFIG_FOLDER = "config_files"
@@ -632,6 +633,31 @@ def main(config):
         key = f"{PHASE_NAME}_ai_response"
         if key in st.session_state and st.session_state[key]:
             st.info(st.session_state[key], icon="🤖")
+            # Add download buttons for the quiz
+            ai_response_content = st.session_state[key]
+            col1, col2 = st.columns(2)
+            with col1:
+                # Download as plain text
+                plain_text_content = format_quiz_for_download(ai_response_content, "plain_text")
+                plain_filename = generate_download_filename("txt")
+                st.download_button(
+                    label="📄 Download as Text",
+                    data=plain_text_content,
+                    file_name=plain_filename,
+                    mime="text/plain",
+                    key=f"download_text_{PHASE_NAME}"
+                )
+            with col2:
+                # Download as OLX
+                olx_content = format_quiz_for_download(ai_response_content, "olx")
+                olx_filename = generate_download_filename("xml")
+                st.download_button(
+                    label="⚙️ Download as OLX",
+                    data=olx_content,
+                    file_name=olx_filename,
+                    mime="application/xml",
+                    key=f"download_olx_{PHASE_NAME}"
+                )
 
         key = f"{PHASE_NAME}_ai_score_debug"
         if key in st.session_state and st.session_state[key]:
@@ -644,6 +670,29 @@ def main(config):
                 key = f"{PHASE_NAME}_ai_response_revision_{z}"
                 if key in st.session_state and st.session_state[key]:
                     st.info(st.session_state[key], icon="🤖")
+                    # Add download buttons for revised responses
+                    revision_content = st.session_state[key]
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        plain_text_content = format_quiz_for_download(revision_content, "plain_text")
+                        plain_filename = generate_download_filename("txt").replace(".txt", f"_rev{z}.txt")
+                        st.download_button(
+                            label="📄 Download as Text",
+                            data=plain_text_content,
+                            file_name=plain_filename,
+                            mime="text/plain",
+                            key=f"download_text_{PHASE_NAME}_rev{z}"
+                        )
+                    with col2:
+                        olx_content = format_quiz_for_download(revision_content, "olx")
+                        olx_filename = generate_download_filename("xml").replace(".xml", f"_rev{z}.xml")
+                        st.download_button(
+                            label="⚙️ Download as OLX",
+                            data=olx_content,
+                            file_name=olx_filename,
+                            mime="application/xml",
+                            key=f"download_olx_{PHASE_NAME}_rev{z}"
+                        )
                 z += 1
 
         if submit_button:

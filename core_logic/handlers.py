@@ -427,3 +427,31 @@ HANDLERS = {
     "perplexity": handle_perplexity,
     "rag":rag_handler
 }
+
+
+# --- Quiz Export Functions ---
+def format_quiz_for_download(quiz_content: str, format_type: str = "plain_text") -> str:
+    """
+    Format quiz content for download.
+    
+    Args:
+        quiz_content: The raw quiz content from the LLM
+        format_type: Either "plain_text" or "olx"
+    
+    Returns:
+        Formatted quiz content as string
+    """
+    if format_type.lower() == "olx":
+        return quiz_content  # OLX format should already be formatted by the LLM
+    else:  # plain_text
+        return quiz_content  # Plain text should already be formatted by the LLM
+
+
+def generate_download_filename(output_format: str = "txt") -> str:
+    """Generate a filename for the quiz download."""
+    from datetime import datetime
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    if output_format.lower() == "olx":
+        return f"quiz_{timestamp}.xml"
+    else:
+        return f"quiz_{timestamp}.txt"
