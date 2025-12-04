@@ -69,7 +69,7 @@ def get_custom_styles():
         label {
             color: var(--text-dark);
             font-weight: 500;
-            font-size: 5rem;
+            font-size: 1rem;
             display: block;
             margin-bottom: 0.5rem;
         }
@@ -95,14 +95,15 @@ def get_custom_styles():
         button, [role="button"] {
             background-color: var(--primary-color);
             color: white;
-            border: none;
+            border: 1px solid rgba(0,0,0,0.06);
             border-radius: var(--border-radius);
             padding: 0.75rem 1.5rem;
             font-size: 1rem;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.18s ease;
             box-shadow: var(--shadow);
+            text-shadow: 0 1px 1px rgba(0,0,0,0.18);
         }
 
         button:hover, [role="button"]:hover {
