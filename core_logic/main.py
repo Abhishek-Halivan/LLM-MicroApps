@@ -8,6 +8,7 @@ from streamlit_extras.let_it_rain import rain
 from core_logic.handlers import HANDLERS, fetch_vimeo_transcript
 from core_logic.llm_config import LLM_CONFIG
 from core_logic.handlers import format_quiz_for_download, generate_download_filename
+from core_logic.styles import get_custom_styles
 
 # Folder where config files are stored
 CONFIG_FOLDER = "config_files"
@@ -434,6 +435,9 @@ def main(config):
                 </style>
             """
         st.markdown(hide_sidebar_style, unsafe_allow_html=True)
+
+    # Add attractive CSS styling
+    st.markdown(get_custom_styles(), unsafe_allow_html=True)
 
     # Select template from the sidebar
     selected_template = APP_TITLE
