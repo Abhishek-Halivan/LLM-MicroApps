@@ -448,10 +448,15 @@ def format_quiz_for_download(quiz_content: str, format_type: str = "plain_text")
 
 
 def generate_download_filename(output_format: str = "txt") -> str:
-    """Generate a filename for the quiz download."""
+    """Generate a filename for the quiz download.
+
+    The `output_format` may be values like 'plain_text', 'txt', 'olx', or 'xml'.
+    We normalize accepted values so that both 'olx' and 'xml' produce an .xml filename,
+    and everything else produces a .txt filename.
+    """
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    if output_format.lower() == "olx":
+    fmt = (output_format or "").lower()
+    if fmt in ("olx", "xml") or "olx" in fmt:
         return f"quiz_{timestamp}.xml"
-    else:
-        return f"quiz_{timestamp}.txt"
+    return f"quiz_{timestamp}.txt"

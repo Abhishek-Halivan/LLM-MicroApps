@@ -633,31 +633,25 @@ def main(config):
         key = f"{PHASE_NAME}_ai_response"
         if key in st.session_state and st.session_state[key]:
             st.info(st.session_state[key], icon="🤖")
-            # Add download buttons for the quiz
+            # Single download button: choose extension based on selected output format
             ai_response_content = st.session_state[key]
-            col1, col2 = st.columns(2)
-            with col1:
-                # Download as plain text
-                plain_text_content = format_quiz_for_download(ai_response_content, "plain_text")
-                plain_filename = generate_download_filename("txt")
-                st.download_button(
-                    label="📄 Download as Text",
-                    data=plain_text_content,
-                    file_name=plain_filename,
-                    mime="text/plain",
-                    key=f"download_text_{PHASE_NAME}"
-                )
-            with col2:
-                # Download as OLX
-                olx_content = format_quiz_for_download(ai_response_content, "olx")
-                olx_filename = generate_download_filename("xml")
-                st.download_button(
-                    label="⚙️ Download as OLX",
-                    data=olx_content,
-                    file_name=olx_filename,
-                    mime="application/xml",
-                    key=f"download_olx_{PHASE_NAME}"
-                )
+            # Determine selected output format for this phase (stored when submitting)
+            selected_format = st.session_state.get(f"{PHASE_NAME}_user_input_output_format", None)
+            if not selected_format:
+                # fallback to current form value if available
+                selected_format = user_input.get("output_format", "Plain Text")
+
+            # Normalize to either 'olx' or 'plain_text'
+            fmt = (selected_format or "").lower()
+            is_olx = "olx" in fmt or fmt == "xml"
+            download_format = "olx" if is_olx else "plain_text"
+            file_ext_format = "olx" if is_olx else "txt"
+
+            content = format_quiz_for_download(ai_response_content, download_format)
+            filename = generate_download_filename(file_ext_format)
+            mime = "application/xml" if is_olx else "text/plain"
+            label = "Download Quiz"
+            st.download_button(label=label, data=content, file_name=filename, mime=mime, key=f"download_{PHASE_NAME}")
 
         key = f"{PHASE_NAME}_ai_score_debug"
         if key in st.session_state and st.session_state[key]:
@@ -670,29 +664,24 @@ def main(config):
                 key = f"{PHASE_NAME}_ai_response_revision_{z}"
                 if key in st.session_state and st.session_state[key]:
                     st.info(st.session_state[key], icon="🤖")
-                    # Add download buttons for revised responses
+                    # Single download button for each revision
                     revision_content = st.session_state[key]
-                    col1, col2 = st.columns(2)
-                    with col1:
-                        plain_text_content = format_quiz_for_download(revision_content, "plain_text")
-                        plain_filename = generate_download_filename("txt").replace(".txt", f"_rev{z}.txt")
-                        st.download_button(
-                            label="📄 Download as Text",
-                            data=plain_text_content,
-                            file_name=plain_filename,
-                            mime="text/plain",
-                            key=f"download_text_{PHASE_NAME}_rev{z}"
-                        )
-                    with col2:
-                        olx_content = format_quiz_for_download(revision_content, "olx")
-                        olx_filename = generate_download_filename("xml").replace(".xml", f"_rev{z}.xml")
-                        st.download_button(
-                            label="⚙️ Download as OLX",
-                            data=olx_content,
-                            file_name=olx_filename,
-                            mime="application/xml",
-                            key=f"download_olx_{PHASE_NAME}_rev{z}"
-                        )
+                    selected_format = st.session_state.get(f"{PHASE_NAME}_user_input_output_format", None)
+                    if not selected_format:
+                        selected_format = user_input.get("output_format", "Plain Text")
+                    fmt = (selected_format or "").lower()
+                    is_olx = "olx" in fmt or fmt == "xml"
+                    download_format = "olx" if is_olx else "plain_text"
+                    file_ext_format = "olx" if is_olx else "txt"
+                    content = format_quiz_for_download(revision_content, download_format)
+                    filename = generate_download_filename(file_ext_format)
+                    # append revision suffix
+                    if filename.endswith(".xml"):
+                        filename = filename.replace(".xml", f"_rev{z}.xml")
+                    else:
+                        filename = filename.replace(".txt", f"_rev{z}.txt")
+                    mime = "application/xml" if is_olx else "text/plain"
+                    st.download_button(label=f"Download Revision {z}", data=content, file_name=filename, mime=mime, key=f"download_{PHASE_NAME}_rev{z}")
                 z += 1
 
         if submit_button:
